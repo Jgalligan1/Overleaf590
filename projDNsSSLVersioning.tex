@@ -1,0 +1,231 @@
+\chapter[Domain Names, SSL, and Versioning]{Domain Names, SSL, and Versioning \\
+\small{\textit{-- JGa, JGr, CS}}
+\index{Domain Names}
+\index{SSL}
+\index{Versioning}
+\index{Chapter!Domain Names, SSL, and Versioning}
+\label{Chapter::DNsSSLVersioning}}
+
+\section{Domain Name Configuration}
+
+\subsection{Acquiring a Domain Name}
+
+We obtained a free domain name through the GitHub Student Developer Pack, which provides a one-year free domain registration through Namecheap. The domain \texttt{overleafssw590group10.me} was registered for hosting our Overleaf instance.
+
+\subsubsection{Steps to Obtain Domain}
+
+\begin{enumerate}
+    \item Sign up for the GitHub Student Developer Pack at \url{https://education.github.com/pack}
+    \item Verify student status with a valid .edu email address
+    \item Access the Namecheap benefit and register a \texttt{.me} domain
+\end{enumerate}
+
+\subsection{DNS Configuration}
+
+After acquiring the domain, we configured DNS records in Namecheap to point to our Digital Ocean Droplet at IP address \texttt{138.197.20.201}:
+
+\begin{itemize}
+    \item \textbf{A Record}: Host: \texttt{@}, Value: \texttt{138.197.20.201}
+    \item \textbf{A Record}: Host: \texttt{www}, Value: \texttt{138.197.20.201}
+\end{itemize}
+
+We verified DNS was working with:
+
+\begin{verbatim}
+curl -I http://overleafssw590group10.me
+\end{verbatim}
+
+\section{SSL Certificate Configuration with Let's Encrypt}
+
+\subsection{Overview}
+
+We implemented SSL certificates using Let's Encrypt with Nginx as a reverse proxy to handle HTTPS traffic. The setup includes automatic certificate renewal every 90 days.
+
+\subsection{Implementation}
+
+\subsubsection{Step 1: Update Docker Compose Configuration}
+
+We added Nginx and Certbot services to \texttt{docker-compose.yml}:
+
+\begin{verbatim}
+version: '3.9'
+services:
+  mongo:
+    image: mongo:6.0
+    container_name: overleaf-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootpassword
+    volumes:
+      - ./mongo-data:/data/db
+      - ./mongodb-keyfile:/data/mongodb-keyfile:ro
+    restart: always
+    command: ["--replSet", "overleaf", "--keyFile", 
+              "/data/mongodb-keyfile"]
+
+  redis:
+    image: redis:7
+    container_name: overleaf-redis
+    restart: always
+    volumes:
+      - ./redis-data:/data
+
+  overleaf-app:
+    image: sharelatex/sharelatex:latest
+    container_name: overleaf-app
+    depends_on:
+      - mongo
+      - redis
+    expose:
+      - "80"
+    environment:
+      OVERLEAF_MONGO_URL: mongodb://root:rootpassword@mongo/
+        sharelatex?authSource=admin&replicaSet=overleaf
+      OVERLEAF_REDIS_HOST: redis
+      OVERLEAF_SITE_URL: https://overleafssw590group10.me
+      OVERLEAF_BEHIND_PROXY: 'true'
+      OVERLEAF_ADMIN_EMAIL: jamesgrant2225@gmail.com
+      OVERLEAF_APP_NAME: MyOverleaf
+    volumes:
+      - ./data:/var/lib/overleaf
+    restart: always
+
+  nginx:
+    image: nginx:alpine
+    container_name: overleaf-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certbot/conf:/etc/letsencrypt:ro
+      - ./nginx/certbot/www:/var/www/certbot:ro
+    depends_on:
+      - overleaf-app
+    restart: always
+
+  certbot:
+    image: certbot/certbot
+    container_name: overleaf-certbot
+    volumes:
+      - ./nginx/certbot/conf:/etc/letsencrypt
+      - ./nginx/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do 
+      certbot renew; sleep 12h & wait $${!}; done;'"
+\end{verbatim}
+
+Key changes: changed \texttt{OVERLEAF\_SITE\_URL} to \texttt{https://}, set \texttt{OVERLEAF\_BEHIND\_PROXY} to \texttt{true}, and exposed Overleaf only internally while Nginx handles external ports 80 and 443.
+
+\subsubsection{Step 2: Create Nginx Configuration}
+
+Created \texttt{nginx/nginx.conf}:
+
+\begin{verbatim}
+events {
+    worker_connections 1024;
+}
+
+http {
+    server {
+        listen 80;
+        server_name overleafssw590group10.me;
+
+        location /.well-known/acme-challenge/ {
+            root /var/www/certbot;
+        }
+
+        location / {
+            return 301 https://$host$request_uri;
+        }
+    }
+
+    server {
+        listen 443 ssl;
+        server_name overleafssw590group10.me;
+
+        ssl_certificate /etc/letsencrypt/live/
+          overleafssw590group10.me/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/
+          overleafssw590group10.me/privkey.pem;
+
+        client_max_body_size 50M;
+
+        location / {
+            proxy_pass http://overleaf-app:80;
+            proxy_set_header X-Forwarded-For 
+              $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header Host $host;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+        }
+    }
+}
+\end{verbatim}
+
+\subsubsection{Step 3: Initialize MongoDB Replica Set}
+
+Overleaf requires MongoDB to run as a replica set. We created a keyfile and initialized it:
+
+\begin{verbatim}
+# Create MongoDB keyfile
+openssl rand -base64 756 > ./mongodb-keyfile
+chmod 400 ./mongodb-keyfile
+sudo chown 999:999 ./mongodb-keyfile
+
+# Start MongoDB
+docker-compose up -d mongo
+
+# Initialize replica set
+docker exec -it overleaf-mongo mongosh -u root -p rootpassword \
+  --authenticationDatabase admin \
+  --eval "rs.initiate({ _id: 'overleaf', members: 
+    [ { _id: 0, host: 'mongo:27017' } ] })"
+\end{verbatim}
+
+\subsubsection{Step 4: Obtain SSL Certificate}
+
+We obtained the certificate from Let's Encrypt using Certbot:
+
+\begin{verbatim}
+# Stop Nginx to free port 80
+docker-compose stop nginx
+
+# Request certificate
+docker run --rm -it \
+  -v "$PWD/nginx/certbot/conf:/etc/letsencrypt" \
+  -v "$PWD/nginx/certbot/www:/var/www/certbot" \
+  -p 80:80 \
+  certbot/certbot \
+  certonly --standalone \
+  -d overleafssw590group10.me \
+  --email jamesgrant2225@gmail.com \
+  --agree-tos \
+  --no-eff-email
+
+# Start all services
+docker-compose up -d
+\end{verbatim}
+
+\subsubsection{Step 5: Verify HTTPS}
+
+We verified the SSL certificate was working:
+
+\begin{verbatim}
+curl -I https://overleafssw590group10.me
+\end{verbatim}
+
+The site was now accessible at \texttt{https://overleafssw590group10.me} with a valid SSL certificate. The Certbot container automatically renews the certificate every 90 days.
+
+\section{Overleaf Container LaTeX Configuration}
+To ensure that all LaTeX packages were available for project compilation, we installed the full TeX Live distribution inside our Overleaf container and verified installation of the TeX Live 2025 version.
+
+\begin{verbatim}
+sudo docker exec -it overleaf-app bash
+apt update
+apt install -y texlive-full
+pdflatex --version
+\end{verbatim}
+

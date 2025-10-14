@@ -1,0 +1,152 @@
+\chapter[Overleaf]{Overleaf \\
+\small{\textit{-- JGa, JGr, CS}}
+\index{Overleaf} 
+\index{Chapter!Overleaf}
+\label{Chapter::Overleaf}}
+
+In this chapter, we discuss the details on the configuration of the Overleaf Docker container on Digital Ocean.
+
+\subsection{Creating the Digital Ocean Droplet}
+
+First, we created a new droplet through the Digital Ocean dashboard by selecting Ubuntu 22.04 LTS as the operating system. We chose a plan wth 4GB RAM and 2 vCPUs, selected the New York datacenter region, and configured SSH key authentication. After creating the droplet, we connected via SSH using the assigned IP address.
+
+\subsection{Installing Docker and Docker Compose}
+
+We first updated the system packages and installed the required dependencies:
+
+\begin{lstlisting}[language=bash]
+apt update && apt upgrade -y
+apt install -y apt-transport-https ca-certificates curl \
+    software-properties-common
+\end{lstlisting}
+
+Then it was necessary to add Docker's official GPG key and repository, ensuring to specify the correct architecture (amd64) for the Intel/AMD droplet:
+
+\begin{lstlisting}[language=bash]
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+    gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] \
+    https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
+    tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+apt update
+apt install -y docker-ce docker-ce-cli containerd.io
+\end{lstlisting}
+
+Finally, we installed Docker Compose and verified both installations:
+
+\begin{lstlisting}[language=bash]
+curl -L "https://github.com/docker/compose/releases/latest/download/\
+    docker-compose-$(uname -s)-$(uname -m)" \
+    -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
+docker --version
+docker-compose --version
+\end{lstlisting}
+
+\subsection{Configuring the Environment}
+
+First, we created a dedicated directory for the Overleaf configuration and navigated into it:
+
+\begin{lstlisting}[language=bash]
+mkdir ~/overleaf
+cd ~/overleaf
+\end{lstlisting}
+
+We created a \texttt{.env} file to store environment variables, which proved cleaner than inline configuration:
+
+\begin{lstlisting}
+OVERLEAF_MONGO_URL=mongodb://mongo/overleaf?directConnection=true
+OVERLEAF_REDIS_HOST=redis
+OVERLEAF_SITE_URL=http://138.197.20.201
+OVERLEAF_APP_NAME=MyOverleaf
+EMAIL_CONFIRMATION_DISABLED=true
+\end{lstlisting}
+
+\subsection{Docker Compose Configuration}
+
+We then added the \texttt{docker-compose.yml} file with several important modifications from standard configurations. The final configuration was:
+
+\begin{minted}[options]{yaml}
+version: '2.2'
+services:
+    sharelatex:
+        restart: always
+        image: sharelatex/sharelatex:latest
+        container_name: sharelatex
+        depends_on:
+            mongo:
+                condition: service_healthy
+            redis:
+                condition: service_started
+        ports:
+            - 80:80
+        volumes:
+            - ~/sharelatex_data:/var/lib/overleaf
+        env_file:
+            - .env
+
+    mongo:
+        restart: always
+        image: mongo:6.0
+        container_name: mongo
+        command: ["--replSet", "rs0"]
+        expose:
+            - 27017
+        volumes:
+            - ~/mongo_data:/data/db
+        healthcheck:
+            test: echo 'db.runCommand("ping").ok' | 
+                mongosh localhost:27017/test --quiet
+            interval: 10s
+            timeout: 10s
+            retries: 5
+            start_period: 40s
+
+    redis:
+        restart: always
+        image: redis:6.2
+        container_name: redis
+        expose:
+            - 6379
+        volumes:
+            - ~/redis_data:/data
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 5s
+            timeout: 3s
+            retries: 5
+\end{minted}
+
+\subsection{Deploying and Initializing}
+
+We composed the containers using Docker-Compose:
+
+\begin{lstlisting}[language=bash]
+docker compose up -d
+\end{lstlisting}
+
+After waiting approximately 30 seconds for MongoDB to fully start, the MongoDB replica set was initialized, which was essential for preventing transaction-related errors:
+
+\begin{lstlisting}[language=bash]
+docker exec mongo mongosh --eval \
+    "rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'mongo:27017'}]})"
+\end{lstlisting}
+
+We then restarted the Overleaf container to establish the connection with the initialized replica set:
+
+\begin{lstlisting}[language=bash]
+docker compose restart sharelatex
+\end{lstlisting}
+
+\subsection{Verification}
+
+Once we saw the runit daemon start message, we verified all containers were running properly:
+
+\begin{lstlisting}[language=bash]
+docker ps
+\end{lstlisting}
+
+The Overleaf web interface is successfully hosted at \texttt{http://138.197.20.201}, confirming the deployment was complete and functional.

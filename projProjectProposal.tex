@@ -1,0 +1,22 @@
+\chapter{Project Proposal \\
+\small{\textit{-- JGa, JGr, CS}}
+\index{Project Proposal} 
+\index{Chapter!Project Proposal}
+\label{Chapter::ProjectProposal}}
+\section{Project Description}
+
+Our project is our senior design project, GreekConnect, which is intended to be a web app and accompanying app which allows fraternities, sororities, and their members to schedule and view events.  Our users include Stevens faculty as well as a significant student body, so for our app to be useful it needs to be easy to install and open on a computer as well as a phone by students who likely don’t want to do very much in order to get access to the app.  Some features which we will need to test include:
+
+\begin{itemize}
+\item Does the app work when multiple people try to make changes at once?
+\item Do transfers of roles and permissions work as intended?
+\item Do students and student leaders see messages intended for them?
+\end{itemize}
+
+We will also need a database, as our app plans on storing the information of many people’s schedules.  Considering the Stevens database only appears to be a convenient option on campus, we expect to need to look into alternatives like an Amazon Web Server.  We will try out a few different options to determine the minimum specifications necessary for our needs.
+
+\section{Dev Ops Tool Specification}
+Source control management will be done using Git and Github, which will allow us to focus on testing and deployment collaboratively.
+Deployment will likely use Docker to containerize the app for various environments and Kubernetes to orchestrate and maintain the containers.
+Our project will likely use a synchronized database such as Firebase, which is a document-based NoSQL database, so that it’s easier to program user data editing/collaboration. We will also explore SQL based options such as Supabase, PostgreSQL and Neon depending on our planned coding schedule.
+Testing will likely use Jest or other Javascript testing frameworks (React Testing Library, Cypress) to test the front and back end of the application. 

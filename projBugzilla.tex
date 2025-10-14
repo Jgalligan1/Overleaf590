@@ -1,0 +1,51 @@
+\chapter[Bugzilla]{Bugzilla \\
+\small{\textit{-- JGa, JGr, CS}}
+\index{Bugzilla} 
+\index{Chapter!Bugzilla}
+\label{Chapter::Bugzilla}}
+In this chapter, we discuss the steps taken for the configuration of the Bugzilla Docker container on Digital Ocean.
+
+\section{Preface}
+Before anything else, make sure you have a Digital Ocean Droplet running. 
+
+Then, enter the following into the terminal: 
+\begin{lstlisting}{language=bash}
+ssh root@164.90.141.14
+\end{lstlisting}
+
+\section{Installing Docker}
+Run the following lines in the terminal to install Docker:
+\begin{lstlisting}{language=bash}
+# update
+apt update && apt upgrade -y
+
+# install docker & compose plugin
+apt install -y ca-certificates curl gnupg lsb-release
+mkdir -p /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+apt update && apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+# enable docker
+systemctl enable --now docker
+\end{lstlisting}
+
+\section{Clone Bugzilla's Repo}
+The following commands can be run to clone the Bugzilla repository:
+\begin{lstlisting}{language=bash}
+apt install -y git
+cd /opt
+git clone https://github.com/bugzilla/bugzilla.git
+cd bugzilla
+# the repo contains a docker-compose.yml (demo)
+docker compose up -d
+# watch logs until it finishes
+docker compose logs -f
+\end{lstlisting}
+
+\section{Public IP:Port}
+The Bugzilla site can be accessed at: \url{http://164.90.141.14:8080/}
+
+

@@ -1,0 +1,349 @@
+\chapter{Linux Commands \\
+\small{\textit{-- JG, CS}}
+\index{Linux} 
+\index{Chapter!Linux Commands}
+\label{Chapter::LinuxCommands}}
+\section{Terminal Bash Commands}
+\begin{verbatim}
+collin@Collin:/mnt/c/WINDOWS/system32$ 
+mkdir -p ~/lx-test && cd ~/lx-test
+
+collin@Collin:~/lx-test$ 
+printf "alpha\nbeta\nGamma\ngamma\nbeta\n" > words.txt
+
+collin@Collin:~/lx-test$ 
+printf "id,name,dept\n1,Ada,EE\n2,Linus,CS\n3,Grace,EE\n4,Dennis,CS\n" > people.csv
+
+collin@Collin:~/lx-test$ 
+printf "INFO boot ok\nWARN disk low\nERROR fan fail\nINFO shutdown\n" > sys.log
+
+collin@Collin:~/lx-test$ dd if=/dev/zero of=blob.bin bs=1K count=48 status=none
+
+collin@Collin:~/lx-test$ mkdir -p src/lib tmp archive
+
+collin@Collin:~/lx-test$ printf "one two three four\n" > src/file1.txt
+
+collin@Collin:~/lx-test$ printf "two three four five\n" > src/file2.txt
+
+collin@Collin:~/lx-test$ ln -s src/file1.txt link-to-file1
+
+collin@Collin:~/lx-test$ touch -t 202401020304 old.txt    
+\end{verbatim}
+
+
+
+\section{Linux Problem Set Answers}
+
+\begin{enumerate}
+\subsection*{A) Navigation \& File Ops}
+    \item Show your present working directory path only.
+    \begin{verbatim}
+collin@Collin:~/lx-test$ pwd
+/home/collin/lx-test
+    \end{verbatim}
+    \item List all entries in the current directory, one per line, including dotfiles.
+    \begin{verbatim}
+collin@Collin:~/lx-test$ ls -1a
+.
+..
+archive
+blob.bin
+link-to-file1
+old.txt
+people.csv
+src
+sys.log
+tmp
+words.txt
+    \end{verbatim}  
+    \item Copy src/file1.txt to tmp/ only if tmp exists; do it verbosely.
+    \begin{verbatim}
+collin@Collin:~/lx-test$ cp -v src/file1.txt tmp/
+'src/file1.txt' -> 'tmp/file1.txt'
+    \end{verbatim}
+    \item Move old.txt into archive/ and keep its original timestamp.
+    \begin{verbatim}
+collin@Collin:~/lx-test$ mv -v old.txt archive/
+renamed 'old.txt' -> 'archive/old.txt'
+collin@Collin:~/lx-test$ ls -l archive/
+total 0
+-rw-r--r-- 1 collin collin 0 Jan  2  2024 old.txt
+    \end{verbatim}
+    \item Create a new empty file notes.md only if it doesn’t already exist.
+    \begin{verbatim}
+collin@Collin:~/lx-test$ ls notes.md
+ls: cannot access 'notes.md': No such file or directory
+collin@Collin:~/lx-test$ [ -e notes.md ] || touch notes.md
+collin@Collin:~/lx-test$ ls notes.md
+notes.md
+    \end{verbatim}
+    \item Show disk usage (human-readable) for the src directory only (not total FS).
+    \begin{verbatim}
+collin@Collin:~/lx-test$ du -h src
+4.0K    src/lib
+16K     src
+    \end{verbatim}
+    
+\subsection*{B) Viewing \& Searching}
+    \item Print line numbers while displaying sys/log.
+    \begin{verbatim}
+collin@Collin:~/lx-test$ cat -n sys.log
+ 1  INFO boot ok
+ 2  WARN disk low
+ 3  ERROR fan fail
+ 4  INFO shutdown
+    \end{verbatim}
+    \item Show only the lines in sys.log that contain ERROR (case-sensitive)
+    \begin{verbatim}
+collin@Collin:~/lx-test$ grep ERROR sys.log
+ERROR fan fail
+    \end{verbatim}  
+    \item Count how many distinct words appear in words.txt (case-insensitive).
+    \begin{verbatim}
+collin@Collin:~/lx-test$ 
+tr '[:upper:]' '[:lower:]' < words.txt | sort | uniq | wc -l
+3    
+    \end{verbatim}
+    \item From words.txt, show lines that start with g or G.
+    \begin{verbatim}
+collin@Collin:~/lx-test$ grep '^[gG]' words.txt
+Gamma
+gamma
+    \end{verbatim}
+    \item Display the first 2 lines of people.csv without using an editor.
+    \begin{verbatim}
+collin@Collin:~/lx-test$ head -n 2 people.csv
+id,name,dept
+1,Ada,EE
+    \end{verbatim}
+    \item Show the last 3 lines of sys.log and keep following if the file grows.
+\begin{verbatim}
+collin@Collin:~/lx-test$ tail -n 3 -f sys.log
+WARN disk low
+ERROR fan fail
+INFO shutdown
+
+
+^C
+\end{verbatim}
+    
+\subsection*{C) Text Processing}
+    \item From people.csv, print only the name column (2nd), excluding the header.
+    \begin{verbatim}
+collin@Collin:~/lx-test$ cut -d',' -f2 people.csv | tail -n +2
+Ada
+Linus
+Grace
+Dennis
+    \end{verbatim}
+    \item Sort words.txt case-insensitively and remove duplicates.
+\begin{verbatim}
+collin@Collin:~/lx-test$ tr '[:upper:]' '[:lower:]' < words.txt | sort | uniq
+alpha
+beta
+gamma
+\end{verbatim}
+    \item Replace every three with 3 in all files under src/ in-place, creating .bak backups.
+\begin{verbatim}
+collin@Collin:~/lx-test$ sed -i.bak 's/three/3/g' src/file1.txt src/file2.txt
+collin@Collin:~/lx-test$ cat src/file1.txt
+one two 3 four
+collin@Collin:~/lx-test$ cat src/file2.txt
+two 3 four five
+collin@Collin:~/lx-test$ ls src/*.bak
+src/file1.txt.bak  src/file2.txt.bak 
+\end{verbatim}
+    \item Print the number of lines, words, and bytes for every *.txt file in src/.
+\begin{verbatim}
+collin@Collin:~/lx-test$ wc src/*.txt
+ 1  4 15 src/file1.txt
+ 1  4 16 src/file2.txt
+ 2  8 31 total
+\end{verbatim}
+
+\subsection*{D) Permissions \& Ownership}
+    \item Make tmp/ readable, writable, and searchable only by the owner.
+\begin{verbatim}
+collin@Collin:~/lx-test$ chmod 700 tmp/
+collin@Collin:~/lx-test$ ls -ld tmp/
+drwx------ 2 collin collin 4096 Sep 15 16:09 tmp/
+\end{verbatim}
+    \item Give group execute permission to src/lib recursively without touching others/owner bits.
+\begin{verbatim}
+collin@Collin:~/lx-test$ chmod -R g+x src/lib
+collin@Collin:~/lx-test$ ls -l src/lib
+total 0
+collin@Collin:~/lx-test$ ls src/lib
+collin@Collin:~/lx-test$ ls -ld src/lib
+drwxr-xr-x 2 collin collin 4096 Sep 15 15:28 src/lib
+\end{verbatim}
+    \item Show the numeric (octal) permissions of src/file2.txt.
+\begin{verbatim}
+collin@Collin:~/lx-test$ stat -c "%a" src/file2.txt
+644   
+\end{verbatim}
+    \item Make notes.md append-only for the owner via file attributes (if supported).
+\begin{verbatim}
+collin@Collin:~/lx-test$ sudo chattr +a notes.md
+[sudo] password for collin:
+collin@Collin:~/lx-test$ lsattr notes.md
+-----a--------e------- notes.md
+collin@Collin:~/lx-test$ echo "text" >> notes.md
+collin@Collin:~/lx-test$ echo "overwrite" > notes.md
+-bash: notes.md: Operation not permitted
+\end{verbatim}
+
+\subsection*{E) Links \& Find}
+    \item Verify whether link-to-file1 is a symlink and show its target path.
+\begin{verbatim}
+collin@Collin:~/lx-test$ readlink link-to-file1
+src/file1.txt
+\end{verbatim}
+    \item Find all regular files under the current tree larger than 40 KiB.
+\begin{verbatim}
+find . -type f -size +40k
+./blob.bin  
+\end{verbatim}
+    \item Find files modified in the last 10 minutes under tmp/ and print their sizes.
+\begin{verbatim}
+collin@Collin:~/lx-test$ find tmp/ -type f -mmin -10 -ls
+\end{verbatim}
+
+\subsection*{F) Processes \& Job Control}
+
+  \item Show your processes in a tree view.
+    \begin{verbatim}
+    jack@Jacktop:~$ ps -u $USER --forest
+  PID TTY          TIME CMD
+  908 pts/4    00:00:00 bash
+  923 pts/4    00:00:00  \_ ps
+  465 pts/1    00:00:00 bash
+  367 pts/2    00:00:00 sh
+  411 ?        00:00:00 systemd
+  412 ?        00:00:00  \_ (sd-pam)
+    \end{verbatim}
+  \item Start \texttt{sleep 120} in the background and show its PID.
+    \begin{verbatim}
+        jack@Jacktop:~$ sleep 120 & echo $1
+    [1] 1047
+    \end{verbatim}
+  \item Send a TERM signal to all \texttt{sleep} processes owned by you (don’t use \texttt{kill -9}).
+    \begin{verbatim}
+        jack@Jacktop:~$ pkill -TERM -u $USER sleep
+    [1]+  Terminated              sleep 120
+    \end{verbatim}
+  \item Show the top 5 processes by memory usage (one-shot, not interactive).
+
+    \begin{verbatim}
+    jack@Jacktop:~$ ps -eo pid,user,%mem,rss,cmd --sort=-%mem | head -n 6
+  PID USER     %MEM   RSS CMD
+  709 root      0.1 22952 /mnt/wsl/docker-desktop/docker-desktop-user-distro proxy --distro-name Ubuntu --docker-desktop-root /mnt/wsl/docker-desktop C:\Program Files\Docker\Docker\resources
+  276 root      0.1 22400 /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal
+   42 root      0.0 15200 /usr/lib/systemd/systemd-journald
+    1 root      0.0 12316 /sbin/init
+  207 root      0.0 11840 /usr/libexec/wsl-pro-service -vv
+    \end{verbatim}
+
+\end{enumerate}
+
+\subsection*{G) Archiving \& Compression}
+\begin{enumerate}
+  \setcounter{enumi}{27}
+  \item Create a gzipped tar archive \texttt{src.tgz} from \texttt{src/} with relative paths.
+  \begin{verbatim}
+jack@Jacktop:~/lx-test$ tar -czf src.tgz -C src .
+    \end{verbatim}
+
+  \item List the contents of \texttt{src.tgz} without extracting.
+  \begin{verbatim}
+jack@Jacktop:~/lx-test$ tar -tzf src.tgz
+./
+./file2.txt
+./file1.txt
+./lib/
+    \end{verbatim}
+
+  \item Extract only \texttt{file2.txt} from \texttt{src.tgz} into \texttt{tmp/}.
+  \begin{verbatim}
+jack@Jacktop:~/lx-test$ tar -xzf src.tgz -C tmp ./file2.txt
+    \end{verbatim}
+\end{enumerate}
+
+\subsection*{H) Networking \& System Info}
+\begin{enumerate}
+  \setcounter{enumi}{30}
+  \item Show all listening TCP sockets with associated PIDs (no root assumptions).
+\begin{verbatim}
+jack@Jacktop:~/lx-test$ ss -ltp
+State      Recv-Q     Send-Q          Local Address:Port            Peer Address:Port     Process
+LISTEN     0          4096            127.0.0.53%lo:domain               0.0.0.0:*
+LISTEN     0          4096               127.0.0.54:domain               0.0.0.0:*
+LISTEN     0          1000           10.255.255.254:domain               0.0.0.0:*
+    \end{verbatim}
+  \item Print your default route (gateway) in a concise form.
+\begin{verbatim}
+jack@Jacktop:~/lx-test$ ip route show default
+default via 172.20.240.1 dev eth0 proto kernel
+    \end{verbatim}
+  \item Display kernel name, release, and machine architecture.
+\begin{verbatim}
+    jack@Jacktop:~/lx-test$ uname -srm
+Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+    \end{verbatim}
+  \item Show the last 5 successful logins (or last sessions) on the system.
+\begin{verbatim}
+jack@Jacktop:~/lx-test$ last -n 5
+reboot   system boot  6.6.87.2-microso Wed Sep 17 20:09   still running
+reboot   system boot  6.6.87.2-microso Mon Sep 15 15:37   still running
+reboot   system boot  6.6.87.2-microso Mon Sep 15 15:09   still running
+
+wtmp begins Mon Sep 15 15:09:55 2025
+    \end{verbatim}
+\end{enumerate}
+
+\subsection*{I) Package \& Services (Debian/Ubuntu)}
+\begin{enumerate}
+  \setcounter{enumi}{34}
+  \item Show the installed version of package \texttt{coreutils}.
+\begin{verbatim}
+jack@Jacktop:~/lx-test$ dpkg -l coreutils | awk '/coreutils/ {print $3}'
+9.4-3ubuntu6
+    \end{verbatim}
+  \item Search available packages whose names contain \texttt{ripgrep}.
+\begin{verbatim}
+jack@Jacktop:~/lx-test$ apt-cache search ripgrep
+elpa-consult - Useful commands based on completing-read for Emacs
+elpa-dumb-jump - jump to definition for multiple languages without configuration
+ripgrep - Recursively searches directories for a regex pattern
+ugrep - faster grep with an interactive query UI
+    \end{verbatim}
+  \item Check whether service \texttt{cron} is active and print its status line only.
+\begin{verbatim}
+jack@Jacktop:~/lx-test$ systemctl status cron | grep 'Active:'
+Active: active (running) since Wed 2025-09-17 20:09:05 EDT; 51min ago
+    \end{verbatim}
+\end{enumerate}
+
+\subsection*{J) Bash \& Scripting}
+\begin{enumerate}
+  \setcounter{enumi}{37}
+  \item Write a one-liner that loops over \texttt{*.txt} in \texttt{src/} and prints: \texttt{<filename>: <linecount>}.
+\begin{verbatim}
+jack@Jacktop:~/lx-test$ for f in src/*.txt; do echo "$f: $(wc -l < "$f")"; done
+src/file1.txt: 1
+src/file2.txt: 1
+    \end{verbatim}
+
+  \item Write a command that exports CSV rows where \texttt{dept == "CS"} to \texttt{cs.txt} (exclude header).
+\begin{verbatim}
+jack@Jacktop:~/lx-test$ awk -F, '$2=="CS" {print}' people.csv > cs.txt
+    \end{verbatim}
+  \item Create a variable \texttt{X} with value 42, print it, then remove it from the environment.
+\begin{verbatim}
+jack@Jacktop:~/lx-test$ export X=42; echo $X; unset X
+42
+    \end{verbatim}
+\end{enumerate}
+
+
+

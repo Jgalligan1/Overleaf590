@@ -1,0 +1,137 @@
+\chapter{Requirements \\
+\small{\textit{-- Author Name}}
+\index{introduction} 
+\index{Chapter!Requirements}
+\label{Chapter::Requirements}}
+
+\section{Stakeholders}
+
+People or roles who are affected, in some way, by a system and so who can contribute requirements or
+knowledge to help you understand the requirements:
+
+\subsection{Customers} 
+Clients and users. Who are they, why do they use your system
+
+\subsection{Sponsors}
+
+\subsection{Engineering and Technical Persons}
+
+\subsection{Regulators}
+
+\subsection{Third Parties}
+
+\subsection{Competitors} 
+
+Systems which provide similar functions.
+
+\section{Key Concepts}
+
+List the key concepts and their definitions that relate to your project. These concepts and terms
+should be used consistently throughout this document and in your project.  This can point out to the Glossary chapter.
+
+\section{User Requirements}
+Abstract statements written in natural language with accompanying informal diagrams. You may
+use user stories or simple use case diagram(s).
+The user requirements should be numbered and linked to use-cases and user-stories.  Here is an 
+example.
+
+
+\small
+\begin{longtable}{|p{11cm}|p{1.5cm}|p{2cm}|}
+%\center
+\caption{User Requirements Table \label{Table::RequirementsUser}}\\
+\hline
+\textbf{Requirement} & \textbf{Priority} & \textbf{Use Case(s)} \\
+\hline 
+\endhead
+
+\begin{reqkQuality}[
+\RequirementName{reqkQuality}{reqqFirstQualityRequirement}]
+\RequirementLabel{reqkQuality}{reqqFirstQualityRequirement}
+The system shall perform the task in less than one second.
+\begin{itemize}
+    \item {\bf Need}: explain the need.
+    \item {\bf Stability}: explain.
+\end{itemize}
+\end{reqkQuality}
+& 
+\gls{must}
+&
+\UseCaseReference{ucFirstUseCase}
+\\ 
+\hline
+
+\begin{reqkFunctional}[
+\RequirementName{reqkFunctional}{reqfFirstFunctionalRequirement}]
+\RequirementLabel{reqkFunctional}{reqfFirstFunctionalRequirement}
+The system shall perform the task of adding 1+1.
+\end{reqkFunctional}
+& 
+\gls{should}
+&
+\UseCaseReference{ucFirstUseCase}
+\\ 
+\hline
+
+\begin{reqkConstraint}[
+\RequirementName{reqkConstraint}{reqcFirstConstraintRequirement}]
+\RequirementLabel{reqkConstraint}{reqcFirstConstraintRequirement}
+The system shall not interfere with local Wi-Fi communication channels.
+\end{reqkConstraint}
+& 
+\gls{could}
+&
+\UseCaseReference{ucFirstUseCase}
+\\ 
+\hline
+
+\begin{reqkInterface}[
+\RequirementName{reqkInterface}{reqiFirstInterfaceRequirement}]
+\RequirementLabel{reqkInterface}{reqiFirstInterfaceRequirement}
+The system shall have a C++ API.
+\end{reqkInterface}
+& 
+\gls{would}
+&
+\UseCaseReference{ucFirstUseCase}
+\\ 
+
+\hline
+\begin{reqkBusiness}[
+\RequirementName{reqkBusiness}{reqbFirstBusinessRequirement}]
+\RequirementLabel{reqkBusiness}{reqbFirstBusinessRequirement}
+The system shall be FDA approved.
+\end{reqkBusiness}
+& 
+\gls{would}
+&
+\UseCaseReference{ucFirstUseCase}
+\\ 
+\hline
+
+\end{longtable}
+
+At some point in your document, you will need to define your use case.
+For this to all work, you also need to define {\tt newtheorem} for the requirements and 
+use cases, in your root manual.tex.
+
+\section{System (Constraints) Requirements}
+More detailed descriptions of the services and constraints from the perspective of the system to
+meet the user requirements. Should be structured and precise. More detailed that describe the
+user requirements and focus on the basic flow, alternative flow, exceptions, pre-conditions, and
+post-conditions, and special requirements for each abstract user requirements. May use use-
+case template for this.  System requirements should be numbered and traced back to the user requirements.
+
+\section{Non-functional (Quality) Requirements}
+Any important non-functional requirements for your project.  These would include any 
+performance and quality requirements (i.e. numbers, such as bandwidth, time, speed, rates, etc.).
+Can add here any type of a multitude of quality requirements that define, in large part, the 
+system architecture.
+
+\section{Domain (Business) Requirements}
+Business rules and regulations that impact what the system does.
+
+\section{Other Requirement Types}
+If there is a reason to define a new, non-overlapping requirement class, you can create
+more requirement classes as needed, but be careful to not create too many.
+
