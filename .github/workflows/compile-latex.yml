@@ -33,8 +33,10 @@ jobs:
         uses: xu-cheng/latex-action@v2
         with:
           root_file: dsnManual.tex
-          args: -pdf -interaction=nonstopmode
-      
+          args: -pdf -interaction=nonstopmode -f
+	  latexmk_use_lualatex: false
+	  latexmk_shell_escape: true
+
       - name: Rename PDF with version
         run: |
           mv dsnManual.pdf dsnManual-${{ steps.git_info.outputs.version }}.pdf
