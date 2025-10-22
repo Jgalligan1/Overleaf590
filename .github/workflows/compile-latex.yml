@@ -1,10 +1,14 @@
-name: Compile LaTeX Documents
+name: Build Overleaf PDF
 
 on:
   push:
     branches:
-      - master
       - main
+    paths-ignore:
+      - '**.pdf'
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -13,87 +17,35 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Get git commit info
-        id: git_info
+      - name: Set changelist number
+        id: version
         run: |
-          SHORT_SHA=$(git rev-parse --short HEAD)
-          COMMIT_COUNT=$(git rev-list --count HEAD)
-          VERSION="v1.0.${COMMIT_COUNT}-${SHORT_SHA}"
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "Version: ${VERSION}"
+          echo "CHANGE_ID=$(git rev-list --count HEAD)" >> $GITHUB_ENV
+          echo "Version: $(git rev-list --count HEAD)"
 
-      - name: Replace version placeholder in master file
-        run: |
-          sed -i "s/PLACEHOLDER/${{ steps.git_info.outputs.version }}/g" dsnManual.tex
-
-      # ------------------------------------------------------------
-      # TeX Live caching section
-      # ------------------------------------------------------------
-      - name: Cache TeX Live installation
-        id: cache-texlive
-        uses: actions/cache@v4
-        with:
-          path: /usr/local/texlive
-          key: texlive-${{ runner.os }}-2024-v1
-
-      - name: Install TeX Live if cache miss
-        if: steps.cache-texlive.outputs.cache-hit != 'true'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y texlive-full
-      # ------------------------------------------------------------
-
-      - name: Compile LaTeX (handle includes safely)
-        run: |
-          mkdir -p build
-          rsync -av --exclude='build' ./ build/
-
-          cd build
-          echo "Running latexmk..."
-          latexmk -pdf -interaction=nonstopmode -f dsnManual.tex | tee build.log
-
-          # Fail on true LaTeX errors only
-          if grep -q "! LaTeX Error" build.log; then
-            echo "❌ LaTeX error detected in log"
-            exit 1
-          fi
-
-          echo "✅ Compilation successful (warnings ignored)"
-          ls -lah *.pdf || (echo "No PDF output found!" && exit 1)
-
-      - name: Move PDF back to root
-        run: |
-          cd build
-          FILE=$(find . -maxdepth 1 -type f -name "*.pdf" | head -n 1)
-          echo "Found PDF: $FILE"
-          cp "$FILE" "../dsnManual-${{ steps.git_info.outputs.version }}.pdf"
-
-      - name: Create GitHub Release and Upload PDF
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ steps.git_info.outputs.version }}
-          name: Release ${{ steps.git_info.outputs.version }}
-          body: |
-            Automated LaTeX compilation for commit ${{ github.sha }}
-
-            **Changes in this version:**
-            ${{ github.event.head_commit.message }}
-          files: dsnManual-${{ steps.git_info.outputs.version }}.pdf
+      - name: Update version in LaTeX file
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHANGE_ID: ${{ env.CHANGE_ID }}
+        run: |
+          sed -i "s/Version:.*/Version: ${CHANGE_ID}/" main.tex || true
 
-      - name: Upload PDF artifact
+      - name: Compile LaTeX document
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: main.tex
+          latexmk_use_xelatex: true
+
+      - name: Upload PDF to artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: compiled-pdf-${{ steps.git_info.outputs.version }}
-          path: dsnManual-${{ steps.git_info.outputs.version }}.pdf
+          name: compiled-pdf
+          path: main.pdf
 
-      - name: Upload build log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: latex-build-log
-          path: build/build.log
+      - name: Commit PDF back to repo
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add main.pdf
+          git commit -m "Add compiled PDF version $CHANGE_ID" || echo "No changes to commit"
+          git push
