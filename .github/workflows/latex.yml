@@ -29,7 +29,13 @@ jobs:
           CHANGE_ID: ${{ env.CHANGE_ID }}
         run: |
           sed -i "s/Version:.*/Version: ${CHANGE_ID}/" dsnManual.tex || true
-
+      
+      - name: Insert git version into LaTeX
+        run: |
+          GIT_HASH=$(git rev-parse --short HEAD)
+          echo "Inserting git hash $GIT_HASH into dsnManual.tex"
+          sed -i "s/PLACEHOLDER/$GIT_HASH/g" dsnManual.tex
+          
       - name: Compile LaTeX document
         uses: xu-cheng/latex-action@v3
         continue-on-error: true
@@ -39,11 +45,6 @@ jobs:
           latexmk_shell_escape: true
           args: -interaction=nonstopmode -file-line-error -f
 
-      - name: Insert git version into LaTeX
-        run: |
-          GIT_HASH=$(git rev-parse --short HEAD)
-          echo "Inserting git hash $GIT_HASH into dsnManual.tex"
-          sed -i "s/PLACEHOLDER/$GIT_HASH/" dsnManual.tex
 
 
 
