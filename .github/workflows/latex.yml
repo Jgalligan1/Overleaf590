@@ -28,12 +28,12 @@ jobs:
         env:
           CHANGE_ID: ${{ env.CHANGE_ID }}
         run: |
-          sed -i "s/Version:.*/Version: ${CHANGE_ID}/" main.tex || true
+          sed -i "s/Version:.*/Version: ${CHANGE_ID}/" dsnManual.tex || true
 
       - name: Compile LaTeX document
         uses: xu-cheng/latex-action@v3
         with:
-          root_file: main.tex
+          root_file: dsnManual.tex
           latexmk_use_xelatex: true
 
       - name: Upload PDF to artifacts
