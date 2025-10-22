@@ -58,4 +58,3 @@ jobs:
         with:
           name: compiled-pdf-${{ steps.git_info.outputs.version }}
           path: dsnManual-${{ steps.git_info.outputs.version }}.pdf
-EOF
