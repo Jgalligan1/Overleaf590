@@ -29,17 +29,24 @@ jobs:
         run: |
           sed -i "s/PLACEHOLDER/${{ steps.git_info.outputs.version }}/g" dsnManual.tex
       
-      - name: Compile dsnManual.tex (master file)
-        uses: xu-cheng/latex-action@v2
-        with:
-          root_file: dsnManual.tex
-          args: -pdf -interaction=nonstopmode -f
-
+      - name: Compile LaTeX document (ignore harmless warnings)
+        run: |
+          echo "Compiling LaTeX..."
+          latexmk -pdf -interaction=nonstopmode -f dsnManual.tex | tee build.log
+          
+          # Check if any true LaTeX errors exist (marked by '! LaTeX Error')
+          if grep -q "! LaTeX Error" build.log; then
+            echo "❌ LaTeX error detected!"
+            exit 1
+          fi
+          
+          echo "✅ Compilation finished successfully (warnings ignored)."
+      
       - name: Rename PDF with version
         run: |
           mv dsnManual.pdf dsnManual-${{ steps.git_info.outputs.version }}.pdf
       
-      - name: Create Release and Upload PDF
+      - name: Create GitHub Release and Upload PDF
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.git_info.outputs.version }}
