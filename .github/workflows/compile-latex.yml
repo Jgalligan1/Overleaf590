@@ -1,0 +1,152 @@
+name: Compile LaTeX Documents
+
+on:
+  push:
+    branches:
+      - master
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: Get git commit info
+        id: git_info
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          COMMIT_COUNT=$(git rev-list --count HEAD)
+          VERSION="v1.0.${COMMIT_COUNT}-${SHORT_SHA}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Version: ${VERSION}"
+      
+      - name: Replace version placeholder in master file
+        run: |
+          sed -i "s/PLACEHOLDER/${{ steps.git_info.outputs.version }}/g" dsnManual.tex
+      
+      - name: Compile dsnManual.tex (master file)
+        uses: xu-cheng/latex-action@v2
+        with:
+          root_file: dsnManual.tex
+          args: -pdf -interaction=nonstopmode
+      
+      - name: Rename PDF with version
+        run: |
+          mv dsnManual.pdf dsnManual-${{ steps.git_info.outputs.version }}.pdf
+      
+      - name: Create Release and Upload PDF
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.git_info.outputs.version }}
+          name: Release ${{ steps.git_info.outputs.version }}
+          body: |
+            Automated LaTeX compilation for commit ${{ github.sha }}
+            
+            **Changes in this version:**
+            ${{ github.event.head_commit.message }}
+          files: dsnManual-${{ steps.git_info.outputs.version }}.pdf
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: compiled-pdf-${{ steps.git_info.outputs.version }}
+          path: dsnManual-${{ steps.git_info.outputs.version }}.pdf
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+     
+
+
+
+
+
+
+     
+
+
+
+     
+
+
+
+
+
+     
+
+
+
+
+
+     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+A
+A
+A
+A
+A
+A
+A
+B
+B
+B
+B
+B
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
