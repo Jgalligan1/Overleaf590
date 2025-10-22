@@ -9,13 +9,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Get git commit info
         id: git_info
         run: |
@@ -24,28 +24,53 @@ jobs:
           VERSION="v1.0.${COMMIT_COUNT}-${SHORT_SHA}"
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "Version: ${VERSION}"
-      
+
       - name: Replace version placeholder in master file
         run: |
           sed -i "s/PLACEHOLDER/${{ steps.git_info.outputs.version }}/g" dsnManual.tex
-      
-      - name: Compile LaTeX document (ignore harmless warnings)
+
+      # ------------------------------------------------------------
+      # TeX Live caching section
+      # ------------------------------------------------------------
+      - name: Cache TeX Live installation
+        id: cache-texlive
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/texlive
+          key: texlive-${{ runner.os }}-2024-v1
+
+      - name: Install TeX Live if cache miss
+        if: steps.cache-texlive.outputs.cache-hit != 'true'
         run: |
-          echo "Compiling LaTeX..."
+          sudo apt-get update
+          sudo apt-get install -y texlive-full
+      # ------------------------------------------------------------
+
+      - name: Compile LaTeX (handle includes safely)
+        run: |
+          mkdir -p build
+          rsync -av --exclude='build' ./ build/
+
+          cd build
+          echo "Running latexmk..."
           latexmk -pdf -interaction=nonstopmode -f dsnManual.tex | tee build.log
-          
-          # Check if any true LaTeX errors exist (marked by '! LaTeX Error')
+
+          # Fail on true LaTeX errors only
           if grep -q "! LaTeX Error" build.log; then
-            echo "❌ LaTeX error detected!"
+            echo "❌ LaTeX error detected in log"
             exit 1
           fi
-          
-          echo "✅ Compilation finished successfully (warnings ignored)."
-      
-      - name: Rename PDF with version
+
+          echo "✅ Compilation successful (warnings ignored)"
+          ls -lah *.pdf || (echo "No PDF output found!" && exit 1)
+
+      - name: Move PDF back to root
         run: |
-          mv dsnManual.pdf dsnManual-${{ steps.git_info.outputs.version }}.pdf
-      
+          cd build
+          FILE=$(find . -maxdepth 1 -type f -name "*.pdf" | head -n 1)
+          echo "Found PDF: $FILE"
+          cp "$FILE" "../dsnManual-${{ steps.git_info.outputs.version }}.pdf"
+
       - name: Create GitHub Release and Upload PDF
         uses: softprops/action-gh-release@v1
         with:
@@ -53,15 +78,22 @@ jobs:
           name: Release ${{ steps.git_info.outputs.version }}
           body: |
             Automated LaTeX compilation for commit ${{ github.sha }}
-            
+
             **Changes in this version:**
             ${{ github.event.head_commit.message }}
           files: dsnManual-${{ steps.git_info.outputs.version }}.pdf
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Upload PDF artifact
         uses: actions/upload-artifact@v4
         with:
           name: compiled-pdf-${{ steps.git_info.outputs.version }}
           path: dsnManual-${{ steps.git_info.outputs.version }}.pdf
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: latex-build-log
+          path: build/build.log
