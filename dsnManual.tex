@@ -70,10 +70,144 @@ urlcolor=blue]{hyperref}
 \newfont{\FrBig}{eufm10 scaled\magstep1}
 
 % some commands:
-% ... [all your custom commands remain unchanged]
+\newcommand{\dxi}{{\tt m\_xDeltaInput}}
+\newcommand{\dyi}{{\tt m\_yDeltaInput}}
+\newcommand{\dci}{{\tt m\_cDeltaInput}}
+\newcommand{\dxo}{{\tt m\_xDeltaOutput}}
+\newcommand{\dyo}{{\tt m\_yDeltaOutput}}
+\newcommand{\dco}{{\tt m\_cDeltaOutput}}
+\newcommand{\ttf}[1]{{\tt #1}}
+\newcommand{\tbl}[2]{{\begin{tabular}{c} #1 \\ #2 \end{tabular}}}
+\newcommand{\gitversion}{PLACEHOLDER}
 
-% listings settings
-\lstset{
+\newcommand{\urltwo}[2]{\mbox{\href{#1}{\tt #2}}}
+\newcommand{\qnorm}[1]{\|#1\|_{\bQ}}
+\newcommand{\qdot}[2]{\lrb #1, #2 \rrb_{\bQ}}
+\newcommand{\kdot}[2]{\lrb #1, #2 \rrb_{\bf k}}
+\newcommand{\tdot}[2]{\lrb #1, #2 \rrb}
+\newcommand{\mydiff}[2]{\lrb #1 - #2 \rrb}
+\newcommand{\lena}{\textit{lena}}
+\newcommand{\barb}{\textit{barbara}}
+\newcommand{\boat}{\textit{boat}}
+\newcommand{\leaves}{\textit{leaves}}
+\newcommand{\rings}{\textit{rings}}
+\newcommand{\treg}{\textit{train region}}
+\newcommand{\dreg}{\textit{denoise region}}
+\newcommand{\oreg}{\textit{overlap region}}
+\newcommand{\sil}{\sigma_l^2}
+\newcommand{\sn}{\sigma^2}
+\newcommand{\bn}{{\mbox{\bf \FrBig N}}}
+\newcommand{\n}{\mbox{\Fr N}}
+\newcommand{\bY}{\textbf{Y}}
+\newcommand{\bX}{\textbf{X}}
+\newcommand{\bb}{\textbf{b}}
+\newcommand{\bu}{\textbf{u}}
+\newcommand{\bv}{\textbf{v}}
+\newcommand{\by}{\textbf{y}}
+\newcommand{\bx}{\textbf{x}}
+\newcommand{\be}{\textbf{e}}
+\newcommand{\bz}{\textbf{z}}
+\newcommand{\bs}{\textbf{s}}
+\newcommand{\bw}{\textbf{w}}
+\newcommand{\bQ}{\textbf{Q}}
+\newcommand{\bphi}{\textbf{$\phi$}}
+\newcommand{\lsb}{\left[}
+\newcommand{\rsb}{\right]}
+\newcommand{\lrb}{\left(}
+\newcommand{\rrb}{\right)}
+\newcommand{\lcb}{\left\{}
+\newcommand{\rcb}{\right\}}
+\newcommand{\R}{\mbox{\BpBig R}}
+\newcommand{\F}{{\cal F}}
+\newcommand{\Fk}{\mbox{\Sc F}}
+\newcommand{\bQF}{\textbf{Q}_{\mbox{\Sc F}}}
+\newcommand{\N}{{\cal N}}
+\newcommand{\xlz}{X_l(z)}
+\newcommand{\xhz}{X_h(z)}
+\newcommand{\xz}{X(z)}
+\newcommand{\pr}{ perfect reconstruction }
+\newcommand{\smb}{Smith-Barnwell }
+\newcommand{\xw}{X(e^{j\omega})}
+\newcommand{\xmw}{X(-e^{j\omega})}
+\newcommand{\dw}{D(e^{j\omega})}
+\newcommand{\dmw}{D(-e^{j\omega})}
+\newcommand{\ew}{E(e^{j\omega})}
+\newcommand{\emw}{E(-e^{j\omega})}
+\newcommand{\fw}{F_0(e^{j\omega})}
+\newcommand{\fmw}{F_0(-e^{j\omega})}
+\newcommand{\hoz}{H_1(z)}
+\newcommand{\hzz}{H_0(z)}
+\newcommand{\goz}{G_1(z)}
+\newcommand{\gzz}{G_0(z)}
+\newcommand{\hzw}{H_{0}(e^{j\omega})}
+\newcommand{\hzmw}{H_{0}(-e^{j\omega})}
+\newcommand{\hzcw}{H_{0}(e^{-j\omega})}
+\newcommand{\how}{H_1(e^{j\omega})}
+\newcommand{\homw}{H_1(-e^{j\omega})}
+\newcommand{\gzw}{G_0(e^{j\omega})}
+\newcommand{\gzmw}{G_0(-e^{j\omega})}
+\newcommand{\gow}{G_1(e^{j\omega})}
+\newcommand{\gomw}{G_1(-e^{j\omega})}
+\newcommand{\wl}{e^{-jwL}}
+\newcommand{\aqua}{\textit{AQua with OR }}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\newtheorem{claim}{Claim}
+\newtheorem{definition}{Definition}
+\newenvironment{proof}{\noindent{\em Proof.}}{\ \hfill Q.E.D.}
+
+% Requirement and Use Case environments
+\newtheorem{reqkFunctional}{Functional Requirement}
+\newtheorem{reqkQuality}{Quality Requirement}
+\newtheorem{reqkConstraint}{Constraint Requirement}
+\newtheorem{reqkInterface}{Interface Requirement}
+\newtheorem{reqkBusiness}{Business Requirement}
+\newtheorem{useCase}{Use Case}
+\newtheorem{userStory}{User Story}
+
+% command for adding a version to the document
+\newcommand{\VERSION}{Version 0.0.0}
+
+% Labeling and referencing macros
+\newcommand{\FamilyName}[2]{\hyperref[#1::#2]{#2}\index{#2}\xspace}
+\newcommand{\FamilyNameReferenceKind}[4]{\hyperref[#1::#2]{$#3#4{\ref*{#1::#2}}$}}
+\newcommand{\FamilyLabel}[2]{\label{#1::#2}}
+
+\newcommand{\UseCaseLabel}[1]{\FamilyLabel{UseCase}{#1}}
+\newcommand{\UseCaseName}[1]{\FamilyName{UseCase}{#1}}
+\newcommand{\UseCaseReference}[1]{\FamilyNameReferenceKind{UseCase}{#1}{UC}{_}}
+\newcommand{\UseCaseNameWSReference}[1]{\begin{tabular}{c}\UseCaseName{#1} \\ (\UseCaseReference{#1}) \end{tabular}}
+\newcommand{\UseCaseNameWIReference}[1]{\UseCaseName{#1} (\UseCaseReference{#1})}
+
+\newcommand{\ChapterName}[1]{\FamilyName{Chapter}{#1}}
+\newcommand{\ChapterLabel}[1]{\FamilyLabel{Chapter}{#1}}
+\newcommand{\ChapterReference}[1]{\FamilyNameReferenceKind{Chapter}{#1}{Chapter}{\mbox{ }}}
+\newcommand{\ChapterNameWIReference}[1]{\ChapterName{#1} (\ChapterReference{#1})}
+
+\newcommand{\FigureName}[1]{\FamilyName{Figure}{#1}}
+\newcommand{\FigureLabel}[1]{\FamilyLabel{Figure}{#1}}
+\newcommand{\FigureReference}[1]{\FamilyNameReferenceKind{Figure}{#1}{Figure}{\mbox{ }}}
+\newcommand{\FigureNameWSReference}[1]{\begin{tabular}{c}\FigureName{#1} \\ (\FigureReference{#1}) \end{tabular}}
+\newcommand{\FigureNameWIReference}[1]{\FigureName{#1} (\FigureReference{#1})}
+
+\newcommand{\TableName}[1]{\FamilyName{Table}{#1}}
+\newcommand{\TableLabel}[1]{\FamilyLabel{Table}{#1}}
+\newcommand{\TableReference}[1]{\FamilyNameReferenceKind{Table}{#1}{Table}{\mbox{ }}}
+
+\newcommand{\RequirementLabel}[2]{\FamilyLabel{#1}{#2}}
+\newcommand{\RequirementName}[2]{\FamilyName{#1}{#2}}
+\newcommand{\RequirementReference}[2]{\FamilyNameReferenceKind{#1}{#2}{#1}{_}}
+\newcommand{\RequirementNameWSReference}[2]{\begin{tabular}{c}\RequirementName{#1}{#2} \\ (\RequirementReference{#1}{#2}) \end{tabular}}
+\newcommand{\RequirementNameWIReference}[2]{\RequirementName{#1}{#1} (\RequirementReference{#1}{#2})}
+
+\newcommand{\UserStoryLabel}[2]{\FamilyLabel{#1}{#2}}
+\newcommand{\UserStoryName}[2]{\FamilyName{#1}{#2}}
+\newcommand{\UserStoryReference}[2]{\FamilyNameReferenceKind{#1}{#2}{R}{_}}
+\newcommand{\UserStoryNameWSReference}[2]{\begin{tabular}{c}\RequirementName{#1}{#2} \\ (\RequirementReference{#1}{#2}) \end{tabular}}
+\newcommand{\UserStoryNameWIReference}[2]{\RequirementName{#1}{#1} (\RequirementReference{#1}{#2})}
+
+\lstset{ % listings settings
   backgroundcolor=\color{white},
   basicstyle=\footnotesize,
   breakatwhitespace=false,
@@ -99,7 +233,7 @@ urlcolor=blue]{hyperref}
 }
 
 % glossaries to organize the document glossary
-\usepackage[toc]{glossaries} % <-- removed invalid numberedchapter option
+\usepackage[toc]{glossaries} % <-- fixed; removed invalid numberedchapter option
 
 % glossary creation
 \input{dsnGlossary.tex}
@@ -137,8 +271,6 @@ projDNsSSLVersioning
 }
 
 \begin{document}
-
-% ... [the rest of your document remains unchanged]
 
 \pagenumbering{roman}
 \singlespacing
