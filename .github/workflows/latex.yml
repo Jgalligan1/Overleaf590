@@ -50,6 +50,7 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add main.pdf
-          git commit -m "Add compiled PDF version $CHANGE_ID" || echo "No changes to commit"
+          git add dsnManual.pdf
+          git diff --cached --quiet || git commit -m "Add compiled PDF version $CHANGE_ID"
           git push
+
