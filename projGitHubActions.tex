@@ -1,0 +1,192 @@
+\chapter[Github Actions]{Github Actions \\
+\small{\textit{-- JGa, JGr, CS}}
+\index{Github Actions} 
+\index{Chapter!Github Actions}
+\label{Chapter::GithubActions}}
+
+\section{GitHub Actions Workflow Configuration}
+
+\subsection{Overview}
+
+We implemented a GitHub Actions workflow to automatically compile our LaTeX document whenever changes are pushed to the repository. This workflow accomplishes three key objectives: adding a version number based on the Git commit count, compiling the LaTeX document using a GitHub runner, and saving the resulting PDF back to the repository.
+
+\subsection{Workflow File Structure}
+
+GitHub Actions workflows are defined in YAML files stored in the \texttt{.github/workflows/} directory of the repository. We created our workflow file at \texttt{.github/workflows/latex.yml}.
+
+\subsection{Creating the Workflow Directory}
+
+First, we created the necessary directory structure in our repository:
+
+\begin{minted}{bash}
+cd /var/lib/overleaf/data/user_files/Overleaf590
+mkdir -p .github/workflows
+\end{minted}
+
+\subsection{Workflow Configuration}
+
+We created the workflow file \texttt{latex.yml} with the following configuration:
+
+\begin{minted}{yaml}
+name: Build Overleaf PDF
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - '**.pdf'
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set changelist number
+        id: version
+        run: |
+          echo "CHANGE_ID=$(git rev-list --count HEAD)" >> $GITHUB_ENV
+          echo "Version: $(git rev-list --count HEAD)"
+      
+      - name: Update version in LaTeX file
+        env:
+          CHANGE_ID: ${{ env.CHANGE_ID }}
+        run: |
+          sed -i "s/Version:.*/Version: ${CHANGE_ID}/" dsnManual.tex || true
+      
+      - name: Insert git version into LaTeX
+        run: |
+          GIT_HASH=$(git rev-parse --short HEAD)
+          echo "Inserting git hash $GIT_HASH into dsnManual.tex"
+          sed -i "s/PLACEHOLDER/$GIT_HASH/g" dsnManual.tex
+          
+      - name: Compile LaTeX document
+        uses: xu-cheng/latex-action@v3
+        continue-on-error: true
+        with:
+          root_file: dsnManual.tex
+          latexmk_use_xelatex: true
+          latexmk_shell_escape: true
+          args: -interaction=nonstopmode -file-line-error -f
+      
+      - name: Upload PDF to artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dsnManual-pdf
+          path: dsnManual.pdf
+      
+      - name: Commit PDF back to repo
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add dsnManual.pdf
+          git diff --cached --quiet || git commit -m "Add compiled PDF version $CHANGE_ID"
+          git push
+\end{minted}
+
+\subsection{Workflow Components Explained}
+
+\subsubsection{Trigger Configuration}
+
+The workflow triggers automatically on every push to the master branch, but ignores changes to PDF files to prevent infinite loops:
+
+\begin{minted}{yaml}
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - '**.pdf'
+\end{minted}
+
+\subsubsection{Version Number Generation}
+
+The changelist number is generated using Git's commit count, which provides a unique, incrementing version number:
+
+\begin{minted}{bash}
+echo "CHANGE_ID=$(git rev-list --count HEAD)" >> $GITHUB_ENV
+\end{minted}
+
+This command counts all commits in the repository history and stores the value in an environment variable accessible to subsequent steps.
+
+\subsubsection{Version Placeholder Replacement}
+
+We defined a placeholder in our LaTeX master file (\texttt{dsnManual.tex}):
+
+\begin{minted}{latex}
+\newcommand{\gitversion}{PLACEHOLDER}
+\end{minted}
+
+The workflow replaces this placeholder with the actual Git commit hash:
+
+\begin{minted}{bash}
+GIT_HASH=$(git rev-parse --short HEAD)
+sed -i "s/PLACEHOLDER/$GIT_HASH/g" dsnManual.tex
+\end{minted}
+
+\subsubsection{LaTeX Compilation}
+
+The workflow uses the \texttt{xu-cheng/latex-action@v3} action to compile the LaTeX document with XeLaTeX:
+
+\begin{minted}{yaml}
+- name: Compile LaTeX document
+  uses: xu-cheng/latex-action@v3
+  continue-on-error: true
+  with:
+    root_file: dsnManual.tex
+    latexmk_use_xelatex: true
+    latexmk_shell_escape: true
+    args: -interaction=nonstopmode -file-line-error -f
+\end{minted}
+
+Key parameters:
+\begin{itemize}
+    \item \texttt{latexmk\_use\_xelatex: true} -- Uses XeLaTeX engine for compilation
+    \item \texttt{latexmk\_shell\_escape: true} -- Allows shell commands (required for minted package)
+    \item \texttt{-f} flag -- Forces compilation to continue despite warnings
+    \item \texttt{continue-on-error: true} -- Prevents workflow failure on LaTeX warnings
+\end{itemize}
+
+\subsection{Committing and Deploying the Workflow}
+
+After creating the workflow file, we committed it to the repository:
+
+\begin{minted}{bash}
+# Stage and commit the workflow
+git add .github/workflows/compile-latex.yml
+git commit -m "Add GitHub Actions workflow for LaTeX compilation"
+
+# Push to GitHub (requires Personal Access Token with workflow scope)
+git push origin master
+\end{minted}
+
+% \subsection{Personal Access Token Configuration}
+
+% Since GitHub no longer accepts password authentication, we created a Personal Access Token with the following permissions:
+
+% \begin{enumerate}
+%     \item Navigate to GitHub Settings $\rightarrow$ Developer settings $\rightarrow$ Personal access tokens
+%     \item Click "Generate new token (classic)"
+%     \item Select scopes:
+%     \begin{itemize}
+%         \item \textbf{repo} (full control of private repositories)
+%         \item \textbf{workflow} (update GitHub Action workflows)
+%     \end{itemize}
+%     \item Generate and copy the token
+%     \item Use token as password when pushing via HTTPS
+% \end{enumerate}
+
+\subsection{Verification}
+
+After pushing the workflow, we verified its execution:
+
+\begin{enumerate}
+    \item Navigate to the repository on GitHub: \url{https://github.com/Jgalligan1/Overleaf590}
+    \item Click the \textbf{Actions} tab
+    \item View the workflow run and check for successful completion
+    \item Download the compiled PDF from the Artifacts section or view it directly in the repository
+\end{enumerate}
+
+% \subsection{Workflow Automation}
