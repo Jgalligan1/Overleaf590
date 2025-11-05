@@ -1,0 +1,38 @@
+\section{Continuous Integration with Jenkins}
+
+A Continuous Integration (CI) pipeline was created using Jenkins to automatically build and test a Python project hosted on GitHub. The process began by setting up a local Jenkins container through Docker and connecting it to a public GitHub repository. A declarative \texttt{Jenkinsfile} was written to define the pipeline stages, including dependency installation, test execution, and report generation.
+
+The pipeline automatically cloned the repository, installed dependencies from \texttt{requirements.txt}, and executed unit tests using \texttt{pytest}. Jenkins then displayed the results in the console output, indicating that two tests passed and one failed intentionally to confirm that the CI process detects code errors correctly.
+
+This setup demonstrates how Jenkins integrates with GitHub to automate testing and ensure code reliability after every change.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\linewidth]{jenkinsPart1.png}
+    \caption{Jenkins environment creation}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\linewidth]{jenkinsPart2.png}
+    \caption{Jenkins file creation}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\linewidth]{jenkinsBuilds.png}
+    \caption{Jenkins overall testing}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\linewidth]{jenkinsPart3Failure.png}
+    \caption{Jenkins success testing}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\linewidth]{jenkinsPart3Success.png}
+    \caption{Jenkins failure testing}
+\end{figure}
+
