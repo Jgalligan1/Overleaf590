@@ -94,6 +94,8 @@ Repeatedly accessing the load balancer endpoint confirmed that requests were alt
     \caption{Docker network showing load balancer distributing requests to backend servers}
 \end{figure}
 
+The link to the load-balancer is here, at http://157.245.10.33:8080/
+
 \section*{Conclusion}
 This project shows how Docker and Nginx can be combined to implement a simple load-balanced web service. The configuration ensures that multiple backend containers can serve traffic reliably and that scaling up is straightforward. By examining the responses from each container and observing alternating content at the load balancer endpoint, we verified that traffic distribution is working as expected.
 
