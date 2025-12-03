@@ -38,7 +38,7 @@ jobs:
           
       - name: Compile LaTeX document
         uses: xu-cheng/latex-action@v3
-        continue-on-error: true
+        #continue-on-error: true
         with:
           root_file: dsnManual.tex
           latexmk_use_xelatex: true
