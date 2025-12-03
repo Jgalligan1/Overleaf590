@@ -38,12 +38,20 @@ jobs:
           
       - name: Compile LaTeX document
         uses: xu-cheng/latex-action@v3
-        #continue-on-error: true
+        continue-on-error: true
         with:
           root_file: dsnManual.tex
           latexmk_use_xelatex: true
           latexmk_shell_escape: true
           args: -interaction=nonstopmode -file-line-error -f
+          
+      - name: LaTeX test compile (fail on error)
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: dsnManual.tex
+          latexmk_use_xelatex: true
+          args: -interaction=nonstopmode -file-line-error -halt-on-error
+  
 
 
 
