@@ -34,6 +34,27 @@ jobs:
           GIT_HASH=$(git rev-parse --short HEAD)
           echo "Inserting git hash $GIT_HASH into dsnManual.tex"
           sed -i "s/PLACEHOLDER/$GIT_HASH/g" dsnManual.tex
+      
+      - name: LaTeX soft test compile
+        uses: xu-cheng/latex-action@v3
+        continue-on-error: true  # <-- allows workflow to continue even if errors occur
+        with:
+          root_file: dsnManual.tex
+          latexmk_use_xelatex: true
+          args: -interaction=nonstopmode -file-line-error -halt-on-error
+
+      - name: Parse LaTeX log for warnings/errors
+        if: always() # always run, even if previous step fails
+        run: |
+          echo "Checking LaTeX log for warnings and errors..."
+          WARNINGS=$(grep -i "Warning" dsnManual.log || true)
+          ERRORS=$(grep -i "Error" dsnManual.log || true)
+          if [[ -n "$WARNINGS" ]]; then
+            echo "::warning file=dsnManual.tex::$WARNINGS"
+          fi
+          if [[ -n "$ERRORS" ]]; then
+            echo "::error file=dsnManual.tex::$ERRORS"
+          fi
           
       - name: Compile LaTeX document
         uses: xu-cheng/latex-action@v3
