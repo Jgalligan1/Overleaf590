@@ -63,7 +63,6 @@ jobs:
           root_file: dsnManual.tex
           latexmk_use_xelatex: true
           latexmk_shell_escape: true
-          silent: true
           args: -interaction=nonstopmode -file-line-error -f
 
 
