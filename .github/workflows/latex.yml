@@ -2,7 +2,8 @@ name: Build Overleaf PDF
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
     paths-ignore:
       - '**.pdf'
 
@@ -18,29 +19,22 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set changelist number
+        id: version
         run: |
           echo "CHANGE_ID=$(git rev-list --count HEAD)" >> $GITHUB_ENV
-
+          echo "Version: $(git rev-list --count HEAD)"
       - name: Update version in LaTeX file
         env:
           CHANGE_ID: ${{ env.CHANGE_ID }}
         run: |
           sed -i "s/Version:.*/Version: ${CHANGE_ID}/" dsnManual.tex || true
-
+      
       - name: Insert git version into LaTeX
         run: |
           GIT_HASH=$(git rev-parse --short HEAD)
+          echo "Inserting git hash $GIT_HASH into dsnManual.tex"
           sed -i "s/PLACEHOLDER/$GIT_HASH/g" dsnManual.tex
-
-      # STEP 1: STRICT TEST COMPILE
-      - name: LaTeX test compile (fail on error)
-        uses: xu-cheng/latex-action@v3
-        with:
-          root_file: dsnManual.tex
-          latexmk_use_xelatex: true
-          args: -interaction=nonstopmode -file-line-error -halt-on-error
-
-      # STEP 2: LENIENT REAL COMPILE
+          
       - name: Compile LaTeX document
         uses: xu-cheng/latex-action@v3
         continue-on-error: true
@@ -49,6 +43,9 @@ jobs:
           latexmk_use_xelatex: true
           latexmk_shell_escape: true
           args: -interaction=nonstopmode -file-line-error -f
+
+
+
 
       - name: Upload PDF to artifacts
         uses: actions/upload-artifact@v4
